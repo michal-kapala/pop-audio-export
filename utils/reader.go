@@ -11,6 +11,12 @@ func ReadU32(reader *bytes.Reader) (uint32, error) {
 	return result, err
 }
 
+func ReadU32BE(reader *bytes.Reader) (uint32, error) {
+	var result uint32
+	err := binary.Read(reader, binary.BigEndian, &result)
+	return result, err
+}
+
 func ReadU64(reader *bytes.Reader) (uint64, error) {
 	var result uint64
 	err := binary.Read(reader, binary.LittleEndian, &result)
@@ -49,6 +55,17 @@ func ReadSizedString(reader *bytes.Reader, size int) (string, error) {
 			buf = append(buf, b)
 		}
 	}
-	buf = append(buf, 0)
 	return string(buf), nil
+}
+
+func ReadBuffer(reader *bytes.Reader, size int) ([]byte, error) {
+	var buf []byte
+	for range size {
+		b, err := reader.ReadByte()
+		if err != nil {
+			return buf, err
+		}
+		buf = append(buf, b)
+	}
+	return buf, nil
 }

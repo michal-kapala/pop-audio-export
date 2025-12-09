@@ -7,10 +7,6 @@ import (
 	"pop-audio-export/utils"
 )
 
-type Readable interface {
-	Read(reader *bytes.Reader)
-}
-
 type ForgeFile struct {
 	Header ForgeHeader
 	Data   ForgeData
@@ -46,6 +42,7 @@ func (fh *ForgeHeader) Read(reader *bytes.Reader) {
 type ForgeData struct {
 	Header       ForgeMetadataHeader
 	DataSections []*ForgeDataSection
+	Files        []*FileData
 }
 
 func (fd *ForgeData) Read(reader *bytes.Reader) {
@@ -77,6 +74,18 @@ func (fd *ForgeData) Read(reader *bytes.Reader) {
 					panic(fmt.Sprintf("ForgeDataSection.NextSectionOffset: %v", err))
 				}
 			}
+		}
+	}
+	// files
+	for _, section := range fd.DataSections {
+		for _, entry := range section.IndexTable {
+			_, err := reader.Seek(int64(entry.DataOffset), io.SeekStart)
+			if err != nil {
+				panic(fmt.Sprintf("IndexTableEntry.DataOffset: %v", err))
+			}
+			file := &FileData{}
+			file.Read(reader)
+			fd.Files = append(fd.Files, file)
 		}
 	}
 }
@@ -216,7 +225,7 @@ func (fds *ForgeDataSection) Read(reader *bytes.Reader) {
 
 type IndexTableEntry struct {
 	DataOffset uint64
-	FileDataId uint32
+	FileKey    uint32
 	DataSize   uint32
 }
 
@@ -230,7 +239,7 @@ func (entry *IndexTableEntry) Read(reader *bytes.Reader) {
 	if err != nil {
 		panic(fmt.Sprintf("IndexTableEntry.FileDataId: %v", err))
 	}
-	entry.FileDataId = id
+	entry.FileKey = id
 	size, err := utils.ReadU32(reader)
 	if err != nil {
 		panic(fmt.Sprintf("IndexTableEntry.DataSize: %v", err))
@@ -332,12 +341,6 @@ func (entry *NameTableEntry) Read(reader *bytes.Reader) {
 		panic(fmt.Sprintf("NameTableEntry.Unknown8: %v", err))
 	}
 	entry.Unknown8 = unk32
-}
-
-type FileData struct {
-	IndexEntry IndexTableEntry
-	NameEntry  NameTableEntry
-	Data       []byte
 }
 
 // Reads a .forge file into its structure.

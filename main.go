@@ -29,10 +29,10 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("%v", err))
 	}
-	fmt.Printf("DataSections[0].IndexTable[0].DataSize: %x\n", forgeFile.Data.DataSections[0].IndexTable[0].DataSize)
-	fmt.Printf("DataSections[1].IndexTable[1].DataSize: %x\n", forgeFile.Data.DataSections[1].IndexTable[0].DataSize)
-	fmt.Printf("DataSections[0].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[0].IndexTable))
-	fmt.Printf("DataSections[1].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[1].IndexTable))
-	fmt.Printf("DataSections[0].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[0].NameTable[0].Name)
-	fmt.Printf("DataSections[1].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[1].NameTable[0].Name)
+	// fmt.Printf("DataSections[0].IndexTable[0].DataSize: %x\n", forgeFile.Data.DataSections[0].IndexTable[0].DataSize)
+	// fmt.Printf("DataSections[1].IndexTable[1].DataSize: %x\n", forgeFile.Data.DataSections[1].IndexTable[0].DataSize)
+	// fmt.Printf("DataSections[0].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[0].IndexTable))
+	// fmt.Printf("DataSections[1].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[1].IndexTable))
+	// fmt.Printf("DataSections[0].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[0].NameTable[0].Name)
+	// fmt.Printf("DataSections[1].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[1].NameTable[0].Name)
 }
