@@ -3,6 +3,8 @@ package forge
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"pop-audio-export/bao"
 	"pop-audio-export/utils"
 	"strings"
@@ -29,6 +31,37 @@ func (fd *FileData) Read(reader *bytes.Reader) {
 			panic(fmt.Sprintf("FileData.Data: %v", err))
 		}
 		fd.Data = &data
+	}
+}
+
+func (fd *FileData) Export(dir string) {
+	// BAO file
+	if fd.Bao != nil {
+		data, ext := fd.Bao.Export()
+		file, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s%s", fd.Header.FileName, ext)))
+		if err != nil {
+			panic(fmt.Sprintf("FileData.Export: %v", err))
+		}
+		defer file.Close()
+		_, err = file.Write(data)
+		if err != nil {
+			panic(fmt.Sprintf("FileData.Export: %v", err))
+		}
+		return
+	}
+
+	if fd.Data == nil {
+		panic("FileData.Export: no available buffer for export")
+	}
+	// non-BAO file
+	file, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s.data", fd.Header.FileName)))
+	if err != nil {
+		panic(fmt.Sprintf("FileData.Export: %v", err))
+	}
+	defer file.Close()
+	_, err = file.Write(*fd.Data)
+	if err != nil {
+		panic(fmt.Sprintf("FileData.Export: %v", err))
 	}
 }
 
@@ -65,7 +98,6 @@ func (fdh *FileDataHeader) Read(reader *bytes.Reader) {
 		panic(fmt.Sprintf("FileDataHeader.FileName: %v", err))
 	}
 	fdh.FileName = str
-	fmt.Printf("[FILEDATA]\tReading %s...\n", str)
 	str, err = utils.ReadSizedString(reader, 255)
 	if err != nil {
 		panic(fmt.Sprintf("FileDataHeader.FilePath: %v", err))

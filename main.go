@@ -1,11 +1,13 @@
 package main
 
 import (
-	"os"
-	//"path/filepath"
 	"fmt"
-	"github.com/sqweek/dialog"
+	"os"
+	"path/filepath"
 	"pop-audio-export/forge"
+	"strings"
+
+	"github.com/sqweek/dialog"
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 		}
 	}
 	fmt.Println(path)
-	//fmt.Println(filepath.Base(path))
+	// read forge
 	data, err := os.ReadFile(path)
 	if err != nil {
 		panic(fmt.Sprintf("%v", err))
@@ -29,10 +31,19 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("%v", err))
 	}
-	// fmt.Printf("DataSections[0].IndexTable[0].DataSize: %x\n", forgeFile.Data.DataSections[0].IndexTable[0].DataSize)
-	// fmt.Printf("DataSections[1].IndexTable[1].DataSize: %x\n", forgeFile.Data.DataSections[1].IndexTable[0].DataSize)
-	// fmt.Printf("DataSections[0].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[0].IndexTable))
-	// fmt.Printf("DataSections[1].IndexTable.Count: %d\n", len(forgeFile.Data.DataSections[1].IndexTable))
-	// fmt.Printf("DataSections[0].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[0].NameTable[0].Name)
-	// fmt.Printf("DataSections[1].NameTable[0].Name: %s\n", forgeFile.Data.DataSections[1].NameTable[0].Name)
+	dir := strings.Replace(filepath.Base(path), filepath.Ext(path), "", 1)
+	// create export directory
+	if err = os.RemoveAll(dir); err != nil {
+		panic(fmt.Sprintf("%v", err))
+	}
+	err = os.Mkdir(dir, 0755)
+	if err != nil {
+		panic(fmt.Sprintf("%v", err))
+	}
+	// export files
+	fmt.Printf("[FORGE]\tExporting %d files to %s\n", len(forgeFile.Data.Files), dir)
+	for idx, file := range forgeFile.Data.Files {
+		fmt.Printf("%d\t%s\n", idx+1, file.Header.FileName)
+		file.Export(dir)
+	}
 }

@@ -8,11 +8,11 @@ import (
 
 // BAO (binary audio object, .bao/.sbao) file used by Ubisoft's proprietary sound engine Dare.
 //
-// For more information on the format refer to https://github.com/vgmstream/vgmstream/blob/ed976476635829ecb23b26b074a0c03ecabd0f7a/src/meta/ubi_bao.c
+// For more information on the format, refer to https://github.com/vgmstream/vgmstream/blob/ed976476635829ecb23b26b074a0c03ecabd0f7a/src/meta/ubi_bao.c
 type BaoFile struct {
 	Header *BaoHeader
-	Data   *[]byte
-	IsOgg  bool // PoP 2008 often simply stores raw .ogg files as data
+	Data   []byte
+	IsOgg  bool // PoP 2008 often simply stores raw .ogg files as BAO data
 }
 
 func (bf *BaoFile) Read(reader *bytes.Reader, size int) {
@@ -22,13 +22,26 @@ func (bf *BaoFile) Read(reader *bytes.Reader, size int) {
 	if err != nil {
 		panic(fmt.Sprintf("BaoFile.Data: %v", err))
 	}
-	bf.Data = &data
+	bf.Data = data
 	bf.IsOgg = string(data[:4]) == "OggS"
-	if bf.IsOgg {
-		fmt.Println("[BAO]\t\t^ is .ogg")
-	}
 }
 
+// Returns a data buffer and extension.
+func (bf *BaoFile) Export() ([]byte, string) {
+	var buf []byte
+	var extension string
+	if bf.IsOgg {
+		buf = bf.Data
+		extension = ".ogg"
+	} else {
+		buf = bf.Header.Export()
+		buf = append(buf, bf.Data...)
+		extension = ".bao"
+	}
+	return buf, extension
+}
+
+// BAO header version for PoP 2008.
 type BaoHeader struct {
 	Version    uint32 // BE, PoP 2008 = 0x021F0010
 	HeaderSize uint32 // 40 bytes
@@ -75,4 +88,16 @@ func (bh *BaoHeader) Read(reader *bytes.Reader) {
 		panic(fmt.Sprintf("BaoHeader.Config: %v", err))
 	}
 	bh.Config = u32
+}
+
+func (bh *BaoHeader) Export() []byte {
+	var header []byte
+	header = utils.WriteU32BE(header, bh.Version)
+	header = utils.WriteU32(header, bh.HeaderSize)
+	header = append(header, bh.GUID[:]...)
+	header = utils.WriteU32(header, bh.Unknown1)
+	header = utils.WriteU32(header, bh.Unknown2)
+	header = utils.WriteU32(header, bh.Class)
+	header = utils.WriteU32(header, bh.Config)
+	return header
 }
